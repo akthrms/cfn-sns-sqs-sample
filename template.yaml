@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  Topic:
+    Type: AWS::SNS::Topic
+
+  Queue:
+    Type: AWS::SQS::Queue
+
+  SNSSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt Queue.Arn
+      TopicArn: !Ref Topic
+
+  QueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Id: AllowSnsTopicToSendMessage
+        Statement:
+          - Sid: 1
+            Effect: Allow
+            Principal: "*"
+            Action:
+              - sqs:SendMessage
+            Resource: "*"
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref Topic
+      Queues:
+        - !Ref Queue
+
+Outputs:
+  TopicArn:
+    Value: !Ref Topic
+
+  QueueURL:
+    Value: !Ref Queue
